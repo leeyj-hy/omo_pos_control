@@ -30,15 +30,18 @@ class omo_pos_con
         {
             cli1 = n.serviceClient<robot_msgs::mrkrPos>("omo_pos_con_srv_cli");
             pub1 = n.advertise<geometry_msgs::Twist>("/cmd_vel",1);
-            timer = n.createTimer(Duration(rate), _callback);
+            timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this, false);
+            omo_con();
         }
 
         void omo_con()
         {
+            ROS_INFO("OMO_CLI started");
             if(cli1.call(mrkr_pos))
             {
-                this -> rot_z = mrkr_pos.response.rot_z;
+                this -> rot_z = -1*mrkr_pos.response.rot_y;
                 omo_mv_cal(this -> rot_z);
+                ROS_INFO("MRKR_POS received");
             }
         }
 
@@ -58,10 +61,11 @@ class omo_pos_con
             else
                 omo_con_twist.angular.z = 0;
             
+            ROS_INFO("OMO POS PUBLISHED : %f", omo_con_twist.angular.z);
             pub1.publish(omo_con_twist);
         }
         
-        void _callback(const ros::TimerEvent&) //mSec
+        void _callback(const ros::TimerEvent& event) //mSec
         {
             if(timer_avialbler)
                 this -> duration ++;
@@ -74,6 +78,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "omo_pos_con");
     omo_pos_con OPC_obj;
     
-    ros::spinOnce();
+    ros::spin();
     return 0;
 }
