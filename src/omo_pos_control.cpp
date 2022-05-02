@@ -12,6 +12,7 @@ class omo_pos_con
         ros::NodeHandle n;
         ros::ServiceClient cli1;
         ros::Publisher pub1;
+        ros::ServiceServer srv1;
         ros::Timer timer;
 
         robot_msgs::mrkrPos mrkr_pos;
@@ -31,12 +32,15 @@ class omo_pos_con
             cli1 = n.serviceClient<robot_msgs::mrkrPos>("/marker_pose_srv");
             pub1 = n.advertise<geometry_msgs::Twist>("/cmd_vel",1);
             timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this, false);
+            srv1 = n.advertiseService("/jjp", &omo_pos_con::is_omo_aligned)
+
             omo_con();
         }
 
         void omo_con()
         {
             ROS_INFO("OMO_CLI started");
+            cli1.call(mrkr_pos);
             if(cli1.call(mrkr_pos))
             {
                 this -> rot_z = -1*mrkr_pos.response.rot_y;
@@ -69,6 +73,14 @@ class omo_pos_con
         {
             if(timer_avialbler)
                 this -> duration ++;
+        }
+
+        void is_omo_aligned(robot_msgs::omo_align::Request &req,
+                            robot_msgs::omo_align::Response &res)
+        {
+            this -> rot_z = -1*mrkr_pos.response.rot_y;
+                omo_mv_cal(this -> rot_z);
+                ROS_INFO("MRKR_POS received");
         }
         
 };
