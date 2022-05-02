@@ -40,8 +40,7 @@ class omo_pos_con
         void omo_con()
         {
             ROS_INFO("OMO_CLI started");
-            cli1.call(mrkr_pos);
-            if(cli1.call(mrkr_pos))
+            if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
             {
                 this -> rot_z = -1*mrkr_pos.response.rot_y;
                 omo_mv_cal(this -> rot_z);
@@ -79,8 +78,8 @@ class omo_pos_con
                             robot_msgs::omo_align::Response &res)
         {
             this -> rot_z = -1*mrkr_pos.response.rot_y;
-                omo_mv_cal(this -> rot_z);
-                ROS_INFO("MRKR_POS received");
+            ROS_INFO("MRKR_POS received");
+            omo_mv_cal(this -> rot_z);
         }
         
 };
