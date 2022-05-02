@@ -22,13 +22,15 @@ class omo_pos_con
         
         float rot_z;
         float rate = 0.1; //timer interrupt rate
-        unsigned int duration = 0;
         bool timer_avialbler = false;
         float track = 0.5; //length between wheels
-        float angular_vel = 0.1;
+        float angular_vel = 0.01;
         float TP = 0;
 
     public:
+        unsigned int duration = 0;
+
+
         omo_pos_con()
         {
             cli1 = n.serviceClient<robot_msgs::mrkrPos>("/marker_pose_srv");
@@ -45,23 +47,24 @@ class omo_pos_con
             if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
             {
                 this -> rot_z = -1*mrkr_pos.response.rot_y;
+                ROS_INFO("MRKR_POS received %f", this -> rot_z);
                 omo_mv_cal(this -> rot_z);
-                ROS_INFO("MRKR_POS received");
             }
         }
 
         void omo_mv_cal(float angle_d)
         {
-            float angle_r = 3.1415/180*angle_d;
+            float angle_r = 0.017452777*angle_d;
             float angle_dist = angle_r*track/2;
-            TP = angle_dist/angular_vel;
+            TP = angle_dist/angular_vel/rate;
+            ROS_INFO("target point : %f", TP);
             timer_avialbler = true;
             omo_run();
         }
 
         void omo_run()
         {
-            if(duration )
+            if(duration < TP)
                 omo_con_twist.angular.z = angular_vel;
             else
                 omo_con_twist.angular.z = 0;
@@ -76,11 +79,11 @@ class omo_pos_con
                 this -> duration ++;
         }
 
-        void is_omo_aligned(robot_msgs::omoalign::Request &req,
+        bool is_omo_aligned(robot_msgs::omoalign::Request &req,
                             robot_msgs::omoalign::Response &res)
         {
             this -> rot_z = -1*mrkr_pos.response.rot_y;
-            ROS_INFO("MRKR_POS received");
+            ROS_INFO("MRKR_POS received2");
             omo_mv_cal(this -> rot_z);
         }
         
@@ -90,7 +93,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "omo_pos_con");
     omo_pos_con OPC_obj;
-    
-    ros::spin();
+    ROS_INFO("%d", OPC_obj.duration);
+    // ros::spin();
     return 0;
 }
