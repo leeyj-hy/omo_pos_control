@@ -28,7 +28,7 @@ class omo_pos_con
     public:
         omo_pos_con()
         {
-            cli1 = n.serviceClient<robot_msgs::mrkrPos>("omo_pos_con_srv_cli");
+            cli1 = n.serviceClient<robot_msgs::mrkrPos>("/marker_pose_srv");
             pub1 = n.advertise<geometry_msgs::Twist>("/cmd_vel",1);
             timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this, false);
             omo_con();
