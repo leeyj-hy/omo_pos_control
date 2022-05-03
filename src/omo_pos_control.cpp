@@ -64,10 +64,14 @@ class omo_pos_con
 
         void omo_run()
         {
-            if(duration < TP)
-                omo_con_twist.angular.z = angular_vel;
+            if(duration < 0)
+                while(duration < TP)
+                    omo_con_twist.angular.z = angular_vel;
             else
-                omo_con_twist.angular.z = 0;
+                while(duration > -1 * TP)
+                    omo_con_twist.angular.z = -1 * angular_vel;
+            
+            omo_con_twist.angular.z = 0;
             
             ROS_INFO("OMO POS PUBLISHED : %f", omo_con_twist.angular.z);
             pub1.publish(omo_con_twist);
