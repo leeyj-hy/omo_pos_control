@@ -22,20 +22,22 @@ class omo_pos_con
         
         float rot_z;
         float rate = 0.1; //timer interrupt rate
-        bool timer_avialbler = false;
         float track = 0.5; //length between wheels
         float angular_vel = 0.01;
-        float TP = 0;
+        
+        double TP=0;
+        double EP=0;
 
     public:
         unsigned int duration = 0;
+        bool timer_avialbler = true;
 
 
         omo_pos_con()
         {
             cli1 = n.serviceClient<robot_msgs::mrkrPos>("/marker_pose_srv");
             pub1 = n.advertise<geometry_msgs::Twist>("/cmd_vel",1);
-            timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this, false);
+            timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this);
             srv1 = n.advertiseService("/omo_con_srv", &omo_pos_con::is_omo_aligned, this);
 
             omo_con();
@@ -46,35 +48,61 @@ class omo_pos_con
             ROS_INFO("OMO_CLI started");
             if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
             {
-                this -> rot_z = -1*mrkr_pos.response.rot_y;
+                this -> rot_z = mrkr_pos.response.rot_y - 1.5708;
                 ROS_INFO("MRKR_POS received %f", this -> rot_z);
                 omo_mv_cal(this -> rot_z);
             }
         }
 
-        void omo_mv_cal(float angle_d)
+        void omo_mv_cal(double angle_d)
         {
-            float angle_r = 0.017452777*angle_d;
-            float angle_dist = angle_r*track/2;
+            double angle_r = 0.017452777*angle_d;
+            ROS_INFO("angle_r : %f", angle_r);
+            double angle_dist = angle_r*(track/2);
+            ROS_INFO("angle_dist = %f", angle_dist);
             TP = angle_dist/angular_vel/rate;
             ROS_INFO("target point : %f", TP);
-            timer_avialbler = true;
-            omo_run();
+            omo_run(TP);
         }
 
-        void omo_run()
+        void omo_run(double TP_tmp)
         {
-            if(duration < 0)
-                while(duration < TP)
-                    omo_con_twist.angular.z = angular_vel;
+            //timer_avialbler = true;
+            double SP = ros::Time::now().toSec();
+            //TP=abs(TP);
+            ROS_INFO("SP : %f", SP);
+            if(TP_tmp > 0)
+            {
+                ROS_INFO("TP > 0, duration : %f", TP_tmp);
+                omo_con_twist.angular.z = angular_vel;
+                pub1.publish(omo_con_twist);
+            }
+
             else
-                while(duration > -1 * TP)
-                    omo_con_twist.angular.z = -1 * angular_vel;
+            {
+                ROS_INFO("TP < 0, duration : %f", TP_tmp);
+                omo_con_twist.angular.z = -1 * angular_vel;
+                pub1.publish(omo_con_twist);
+            }
             
-            omo_con_twist.angular.z = 0;
+            
+        
+            //while(duration < -1 * TP&&ros::ok())
+            //{
+            //    ROS_INFO("TP < 0, duration : %d", duration);
+            //    omo_con_twist.angular.z = -1 * angular_vel;
+            //    pub1.publish(omo_con_twist);
+            //}
+                    
+            if(abs(TP_tmp) > ros::Time::now().toSec() - SP)
+            {
+                omo_con_twist.angular.z = 0;
+                ROS_INFO("vel = 0");
+            }
             
             ROS_INFO("OMO POS PUBLISHED : %f", omo_con_twist.angular.z);
             pub1.publish(omo_con_twist);
+            timer_avialbler = false;
         }
         
         void _callback(const ros::TimerEvent& event) //mSec
@@ -97,7 +125,8 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "omo_pos_con");
     omo_pos_con OPC_obj;
-    ROS_INFO("%d", OPC_obj.duration);
-    // ros::spin();
+    //ROS_INFO("%d", OPC_obj.duration);
+    if(OPC_obj.timer_avialbler)
+        ros::spin();
     return 0;
 }
