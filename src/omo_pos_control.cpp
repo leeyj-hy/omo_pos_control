@@ -23,7 +23,7 @@ class omo_pos_con
         float rot_z;
         float rate = 0.1; //timer interrupt rate
         float track = 0.5; //length between wheels
-        float angular_vel = 0.01;
+        float angular_vel = 0.1;
         
         double TP=0;
         double EP=0;
@@ -46,17 +46,16 @@ class omo_pos_con
         void omo_con()
         {
             ROS_INFO("OMO_CLI started");
-            if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
-            {
-                this -> rot_z = mrkr_pos.response.rot_y - 1.5708;
-                ROS_INFO("MRKR_POS received %f", this -> rot_z);
-                omo_mv_cal(this -> rot_z);
-            }
+            // if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
+            // {
+            //     this -> rot_z = mrkr_pos.response.rot_y;
+            //     ROS_INFO("MRKR_POS received %f", this -> rot_z);
+            //     omo_mv_cal(this -> rot_z);
+            // }
         }
 
-        void omo_mv_cal(double angle_d)
+        void omo_mv_cal(double angle_r)
         {
-            double angle_r = 0.017452777*angle_d;
             ROS_INFO("angle_r : %f", angle_r);
             double angle_dist = angle_r*(track/2);
             ROS_INFO("angle_dist = %f", angle_dist);
@@ -114,9 +113,12 @@ class omo_pos_con
         bool is_omo_aligned(robot_msgs::omoalign::Request &req,
                             robot_msgs::omoalign::Response &res)
         {
-            this -> rot_z = -1*mrkr_pos.response.rot_y;
-            ROS_INFO("MRKR_POS received2");
-            omo_mv_cal(this -> rot_z);
+            if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
+            {
+                this -> rot_z = mrkr_pos.response.rot_y;
+                ROS_INFO("MRKR_POS received %f", this -> rot_z);
+                omo_mv_cal(this -> rot_z);
+            }
         }
         
 };
