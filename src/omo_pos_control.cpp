@@ -57,7 +57,8 @@ class omo_pos_con
         void omo_mv_cal(double angle_r)
         {
             ROS_INFO("angle_r : %f", angle_r);
-            double angle_dist = angle_r*(track/2);
+            // double angle_dist = angle_r*(track/2);
+            double angle_dist = angle_r;
             ROS_INFO("angle_dist = %f", angle_dist);
             TP = angle_dist/angular_vel;
             ROS_INFO("target point : %f", TP);
@@ -73,14 +74,14 @@ class omo_pos_con
             if(TP_tmp > 0)
             {
                 ROS_INFO("TP > 0, duration : %f", TP_tmp);
-                omo_con_twist.angular.z = angular_vel;
+                omo_con_twist.angular.z = -1 * angular_vel;
                 
             }
 
             else
             {
                 ROS_INFO("TP < 0, duration : %f", TP_tmp);
-                omo_con_twist.angular.z = -1 * angular_vel;
+                omo_con_twist.angular.z =  angular_vel;
                 
             }
             
