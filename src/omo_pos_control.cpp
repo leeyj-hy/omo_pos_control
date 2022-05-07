@@ -37,7 +37,7 @@ class omo_pos_con
         {
             cli1 = n.serviceClient<robot_msgs::mrkrPos>("/marker_pose_srv");
             pub1 = n.advertise<geometry_msgs::Twist>("/cmd_vel",1);
-            timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this);
+            // timer = n.createTimer(Duration(rate), &omo_pos_con::_callback, this);
             srv1 = n.advertiseService("/omo_con_srv", &omo_pos_con::is_omo_aligned, this);
 
             omo_con();
@@ -59,7 +59,7 @@ class omo_pos_con
             ROS_INFO("angle_r : %f", angle_r);
             double angle_dist = angle_r*(track/2);
             ROS_INFO("angle_dist = %f", angle_dist);
-            TP = angle_dist/angular_vel/rate;
+            TP = angle_dist/angular_vel;
             ROS_INFO("target point : %f", TP);
             omo_run(TP);
         }
@@ -104,11 +104,11 @@ class omo_pos_con
             timer_avialbler = false;
         }
         
-        void _callback(const ros::TimerEvent& event) //mSec
-        {
-            if(timer_avialbler)
-                this -> duration ++;
-        }
+        // void _callback(const ros::TimerEvent& event) //mSec
+        // {
+        //     if(timer_avialbler)
+        //         this -> duration ++;
+        // }
 
         bool is_omo_aligned(robot_msgs::omoalign::Request &req,
                             robot_msgs::omoalign::Response &res)
@@ -118,6 +118,8 @@ class omo_pos_con
                 this -> rot_z = mrkr_pos.response.rot_y;
                 ROS_INFO("MRKR_POS received %f", this -> rot_z);
                 omo_mv_cal(this -> rot_z);
+                res.is_aligned = true;
+                return true;
             }
         }
         
@@ -128,7 +130,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "omo_pos_con");
     omo_pos_con OPC_obj;
     //ROS_INFO("%d", OPC_obj.duration);
-    if(OPC_obj.timer_avialbler)
+    // if(OPC_obj.timer_avialbler)
         ros::spin();
     return 0;
 }
