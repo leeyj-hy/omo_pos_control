@@ -74,14 +74,14 @@ class omo_pos_con
             {
                 ROS_INFO("TP > 0, duration : %f", TP_tmp);
                 omo_con_twist.angular.z = angular_vel;
-                pub1.publish(omo_con_twist);
+                
             }
 
             else
             {
                 ROS_INFO("TP < 0, duration : %f", TP_tmp);
                 omo_con_twist.angular.z = -1 * angular_vel;
-                pub1.publish(omo_con_twist);
+                
             }
             
             
@@ -92,12 +92,17 @@ class omo_pos_con
             //    omo_con_twist.angular.z = -1 * angular_vel;
             //    pub1.publish(omo_con_twist);
             //}
-                    
-            if(abs(TP_tmp) > ros::Time::now().toSec() - SP)
+            while (ros::ok())
             {
-                omo_con_twist.angular.z = 0;
-                ROS_INFO("vel = 0");
-            }
+                pub1.publish(omo_con_twist);
+                if(abs(TP_tmp) < ros::Time::now().toSec() - SP)
+                {
+                    omo_con_twist.angular.z = 0;
+                    ROS_INFO("vel = 0");
+                    break;
+                }
+            }        
+            
             
             ROS_INFO("OMO POS PUBLISHED : %f", omo_con_twist.angular.z);
             pub1.publish(omo_con_twist);
@@ -131,6 +136,6 @@ int main(int argc, char **argv)
     omo_pos_con OPC_obj;
     //ROS_INFO("%d", OPC_obj.duration);
     // if(OPC_obj.timer_avialbler)
-        ros::spin();
+    ros::spin();
     return 0;
 }
