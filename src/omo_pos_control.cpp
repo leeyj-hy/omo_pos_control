@@ -24,9 +24,11 @@ class omo_pos_con
         float rate = 0.1; //timer interrupt rate
         float track = 0.5; //length between wheels
         float angular_vel = 0.1;
+        float angular_tol = 0.1;
         
         double TP=0;
         double EP=0;
+        int i = 0;
 
     public:
         unsigned int duration = 0;
@@ -119,15 +121,29 @@ class omo_pos_con
         bool is_omo_aligned(robot_msgs::omoalign::Request &req,
                             robot_msgs::omoalign::Response &res)
         {
-            if(cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
+            while (ROS::ok()&&cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
             {
+                i++;
                 this -> rot_z = mrkr_pos.response.rot_y;
                 ROS_INFO("MRKR_POS received %f", this -> rot_z);
+                ROS_INFO("iter = %d", this -> i);
+                if(abs(mrkr_pos.response.rot_y)<angular_tol) 
+                {
+                    res.is_aligned = true;
+                    break;
+                }
+                if(i>10)
+                {
+                    ROS_INFO("can't auto align");
+                    res.is_aligned = false;
+                    break;
+                }
                 omo_mv_cal(this -> rot_z);
-                res.is_aligned = true;
-                return true;
-            }
+            } 
+            
+            return true;
         }
+        
         
 };
 
