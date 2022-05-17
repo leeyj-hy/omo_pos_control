@@ -121,7 +121,7 @@ class omo_pos_con
         bool is_omo_aligned(robot_msgs::omoalign::Request &req,
                             robot_msgs::omoalign::Response &res)
         {
-            while (ROS::ok()&&cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
+            while (ros::ok()&&cli1.call(mrkr_pos)&&mrkr_pos.response.is_pos_return)
             {
                 i++;
                 this -> rot_z = mrkr_pos.response.rot_y;
@@ -129,12 +129,13 @@ class omo_pos_con
                 ROS_INFO("iter = %d", this -> i);
                 if(abs(mrkr_pos.response.rot_y)<angular_tol) 
                 {
+                    ROS_WARN("auto align success");
                     res.is_aligned = true;
                     break;
                 }
                 if(i>10)
                 {
-                    ROS_INFO("can't auto align");
+                    ROS_WARN("can't auto align");
                     res.is_aligned = false;
                     break;
                 }
